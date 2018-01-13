@@ -82,7 +82,7 @@ func (ud URLDetail) String() (s string) {
 		fallthrough
 	case "application/java-archive":
 		fallthrough
-	case " 	application/x-shockwave-flash":
+	case "application/x-shockwave-flash":
 		fallthrough
 	case "application/x-msdos-program":
 		mimetype = red(mimetype)
