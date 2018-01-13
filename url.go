@@ -84,7 +84,19 @@ func (ud URLDetail) String() (s string) {
 		mimetype = red(mimetype)
 	}
 
-	return fmt.Sprintf("[%s] %s [%s] => %s", status, u, mimetype, s256)
+	var ip string
+	if len(ud.IP) != 0 {
+		ip = ud.IP[0]
+	}
+
+	for _, i := range ud.IP {
+		if strings.Contains(i, ".") {
+			ip = i
+			break
+		}
+	}
+
+	return fmt.Sprintf("[%s] <%s> %s [%s] => %s", status, ip, u, mimetype, s256)
 }
 
 // GetURLDetail of target url
