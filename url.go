@@ -47,6 +47,10 @@ func (ud URLDetail) String() (s string) {
 	yellow := color.New(color.FgYellow).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
 
+	if ud.AccessSucceeded == false {
+		return fmt.Sprintf("%s %s", red("[ERROR: Unreachable]"), yellow(ud.URL))
+	}
+
 	var status string
 	switch {
 	case ud.StatusCode == 200:
