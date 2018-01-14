@@ -73,10 +73,17 @@ func (ud URLDetail) String() (s string) {
 	}
 
 	s256 := ud.ContentSha256
-	if ud.ContentDetected != 0 {
+
+	switch {
+	case ud.ContentDetected != 0:
 		s256 = red(
 			s256 + fmt.Sprintf(" [VT: %d]", ud.ContentDetected),
 		)
+	case ud.ContentSha256 == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855":
+		s256 = green(
+			"<empty file>",
+		)
+	default:
 	}
 
 	mimetype := ud.ContentType
