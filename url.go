@@ -187,6 +187,8 @@ func GetURLDetail(u string) (detail URLDetail, err error) {
 
 	// Request to URL
 	req, _ := http.NewRequest("GET", u, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0")
+
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		detail.AccessSucceeded = false
