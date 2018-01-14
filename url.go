@@ -297,6 +297,13 @@ func GetURLDetails(url string, maxDepth int) (result Traced, err error) {
 			break
 		}
 
+		if detail.RedirectTo != "" && strings.HasPrefix(detail.RedirectTo, "http") == false {
+			// FIXME: make this better
+			items := strings.Split(targetURL, "/")
+			items[len(items)-1] = detail.RedirectTo
+			detail.RedirectTo = strings.Join(items, "/")
+		}
+
 		result.Details = append(result.Details, detail)
 		if detail.RedirectTo == "" {
 			break
@@ -313,10 +320,17 @@ func GetURLDetails(url string, maxDepth int) (result Traced, err error) {
 func Normalize(u string) (targetURL string) {
 
 	targetURL = u
+
 	if strings.HasPrefix(targetURL, "hxxp") {
 		targetURL = strings.Replace(targetURL, "hxxp", "http", 1)
 	}
 
+	if strings.HasPrefix(targetURL, "http") == false {
+		targetURL = fmt.Sprintf("http://%s", targetURL)
+	}
+
 	targetURL = strings.Replace(targetURL, "[.]", ".", -1)
+	targetURL = strings.Replace(targetURL, `\.`, ".", -1)
+
 	return
 }
