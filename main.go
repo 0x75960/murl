@@ -8,7 +8,6 @@ import (
 
 	"github.com/mattn/go-colorable"
 
-	"github.com/bradfitz/iter"
 	"github.com/dutchcoders/go-virustotal"
 )
 
@@ -30,8 +29,32 @@ func init() {
 func main() {
 	flag.Parse()
 
+	if *ModeLoadContent != "" {
+		t, err := Load()
+		if err != nil {
+			log.Fatalln("failed to load stored result", err)
+		}
+
+		fmt.Fprintln(colorable.NewColorableStdout(), t)
+		os.Exit(0)
+	}
+
 	if flag.NArg() != 1 {
 		log.Fatalln("please specify target url. see --help.")
+	}
+
+	if *ModeSaveContent != "" {
+		stat, err := os.Stat(*ModeSaveContent)
+		if err == nil && stat.IsDir() == false {
+			log.Fatalf("%s exsits. but it isn't directory.\n", *ModeSaveContent)
+		}
+
+		if err != nil && os.IsNotExist(err) {
+			err := os.MkdirAll(*ModeSaveContent, os.ModePerm)
+			if err != nil {
+				log.Fatalln("failed to mkdir")
+			}
+		}
 	}
 
 	VT, _ = virustotal.NewVirusTotal(*APIKEY)
@@ -42,12 +65,8 @@ func main() {
 		log.Fatalln("err")
 	}
 
-	for idx, item := range detail {
-
-		for range iter.N(idx) {
-			fmt.Print("  ")
-		}
-
-		fmt.Fprintln(colorable.NewColorableStdout(), item)
+	fmt.Fprintln(colorable.NewColorableStdout(), detail)
+	if *ModeSaveContent != "" {
+		detail.Store()
 	}
 }

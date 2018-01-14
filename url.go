@@ -15,32 +15,36 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0x75960/dencode"
+
 	"github.com/bradfitz/iter"
 	"github.com/fatih/color"
 )
 
-var ModeSaveContent = flag.String("c", "", "save content into specified directory")
+var ModeSaveContent = flag.String("s", "", "store result into specified directory")
+var ModeLoadContent = flag.String("l", "", "load stored result from specified directory")
 
 // URLDetail record
 type URLDetail struct {
-	AccessSucceeded bool
+	AccessSucceeded bool `toml:"access_succeeded,omitempty"`
 
-	IP     []string
-	URL    string
-	Domain string
+	IP     []string `toml:"ip,omitempty"`
+	URL    string   `toml:"url,omitempty"`
+	Domain string   `toml:"domain,omitempty"`
 
-	Status     string
-	StatusCode int
+	Status     string `toml:"status,omitempty"`
+	StatusCode int    `toml:"status_code,omitempty"`
 
-	ContentType   string
-	ContentSha256 string
+	ContentType   string `toml:"content_type,omitempty"`
+	ContentSha256 string `toml:"content_sha_256,omitempty"`
 
-	URLDetected     int
-	ContentDetected int
+	URLDetected     int `toml:"url_detected,omitempty"`
+	ContentDetected int `toml:"content_detected,omitempty"`
 
-	RedirectTo string
+	RedirectTo string `toml:"redirect_to,omitempty"`
 }
 
+// String format interface for "fmt"
 func (ud URLDetail) String() (s string) {
 
 	green := color.New(color.FgGreen).SprintFunc()
@@ -101,6 +105,58 @@ func (ud URLDetail) String() (s string) {
 	}
 
 	return fmt.Sprintf("[%s] <%s> %s [%s] => %s", status, ip, u, mimetype, s256)
+}
+
+// Traced Result
+type Traced struct {
+	Date    time.Time   `toml:"traced_at"`
+	Details []URLDetail `toml:"details"`
+}
+
+// String formatter for Traced
+func (t Traced) String() (s string) {
+
+	cyan := color.New(color.FgCyan).SprintFunc()
+
+	s += fmt.Sprintf("traced at %s\n", cyan(t.Date.Format("2006/01/02 15:04:05 UTC")))
+
+	for idx, item := range t.Details {
+
+		for range iter.N(idx) {
+			s += "  "
+		}
+
+		s += fmt.Sprintf("%s\n", item)
+	}
+
+	return
+}
+
+// Store traced result
+func (t Traced) Store() (err error) {
+
+	f, err := os.Create(filepath.Join(*ModeSaveContent, "result.toml"))
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	dencode.NewEncoder(dencode.TomlFormat, f).Encode(&t)
+	return
+}
+
+// Load result from stored result
+func Load() (t Traced, err error) {
+	f, err := os.Open(filepath.Join(*ModeLoadContent, "result.toml"))
+	if err != nil {
+		return t, err
+	}
+
+	defer f.Close()
+	dencode.NewDecoder(dencode.TomlFormat, f).Decode(&t)
+
+	return
 }
 
 // GetURLDetail of target url
@@ -176,8 +232,18 @@ func procContent(r io.Reader) (s256 string, err error) {
 		return hex.EncodeToString(hasher.Sum(nil)), nil
 	}
 
+	err = os.MkdirAll(
+		filepath.Join(*ModeSaveContent, "contents"),
+		os.ModePerm,
+	)
+	if err != nil {
+		io.Copy(hasher, r)
+		// toriaezu naniga attemo sha256 kaesu
+		return hex.EncodeToString(hasher.Sum(nil)), err
+	}
+
 	// save content to temppath
-	tmppath := filepath.Join(*ModeSaveContent, "__to_be_renamed__")
+	tmppath := filepath.Join(*ModeSaveContent, "contents", "__to_be_renamed__")
 	f, err := os.Create(tmppath)
 	if err != nil {
 		io.Copy(hasher, r)
@@ -195,26 +261,28 @@ func procContent(r io.Reader) (s256 string, err error) {
 	f.Close()
 
 	// rename filename to sha256
-	err = os.Rename(tmppath, filepath.Join(*ModeSaveContent, s256))
+	err = os.Rename(tmppath, filepath.Join(*ModeSaveContent, "contents", s256))
 
 	return
 }
 
 // GetURLDetails by GET Request to specified url up to maxDepth
-func GetURLDetails(url string, maxDepth int) (result []URLDetail, err error) {
+func GetURLDetails(url string, maxDepth int) (result Traced, err error) {
 
 	targetURL := url
+
+	result.Date = time.Now().UTC()
 
 	for range iter.N(maxDepth) {
 
 		detail, err := GetURLDetail(targetURL)
 		if err != nil {
 			log.Println(err)
-			result = append(result, detail)
+			result.Details = append(result.Details, detail)
 			break
 		}
 
-		result = append(result, detail)
+		result.Details = append(result.Details, detail)
 		if detail.RedirectTo == "" {
 			break
 		}
