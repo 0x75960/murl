@@ -57,10 +57,12 @@ func main() {
 		}
 	}
 
+	targetURL := Normalize(flag.Arg(0))
+
 	VT, _ = virustotal.NewVirusTotal(*APIKEY)
 	VTS = VirusTotal{apikey: *APIKEY}
 
-	detail, err := GetURLDetails(flag.Arg(0), *MaxDepth)
+	detail, err := GetURLDetails(targetURL, *MaxDepth)
 	if err != nil {
 		log.Fatalln("err")
 	}

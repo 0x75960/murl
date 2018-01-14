@@ -301,3 +301,14 @@ func GetURLDetails(url string, maxDepth int) (result Traced, err error) {
 
 	return
 }
+
+func Normalize(u string) (targetURL string) {
+
+	targetURL = u
+	if strings.HasPrefix(targetURL, "hxxp") {
+		targetURL = strings.Replace(targetURL, "hxxp", "http", 1)
+	}
+
+	targetURL = strings.Replace(targetURL, "[.]", ".", -1)
+	return
+}
