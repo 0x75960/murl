@@ -205,11 +205,17 @@ func GetURLDetail(u string) (detail URLDetail, err error) {
 	}
 
 	if *APIKEY != "" {
-		cr, err := VTS.GetFileReport(s256)
-		if err != nil {
-			log.Println("failed to get content report", err)
+
+		if s256 != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" {
+
+			// if not empty
+			cr, err := VTS.GetFileReport(s256)
+			if err != nil {
+				log.Println("failed to get content report", err)
+			}
+
+			detail.ContentDetected = cr.Positives
 		}
-		detail.ContentDetected = cr.Positives
 
 		p, _ := url.Parse(u)
 		ur, err := VT.ReportUrl(p)
