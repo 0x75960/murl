@@ -95,8 +95,10 @@ func (ud URLDetail) String() (s string) {
 		fallthrough
 	case "application/x-shockwave-flash":
 		fallthrough
+	case "application/x-msdownload":
+		fallthrough
 	case "application/x-msdos-program":
-		mimetype = red(mimetype)
+		mimetype = yellow(mimetype)
 	}
 
 	var ip string
