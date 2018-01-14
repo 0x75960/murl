@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/0x75960/dencode"
+	"github.com/0x75960/midy"
 
 	"github.com/bradfitz/iter"
 	"github.com/fatih/color"
@@ -79,9 +80,9 @@ func (ud URLDetail) String() (s string) {
 		s256 = red(
 			s256 + fmt.Sprintf(" [VT: %d]", ud.ContentDetected),
 		)
-	case ud.ContentSha256 == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855":
+	case midy.EmptyHash(ud.ContentSha256):
 		s256 = green(
-			"<empty file>",
+			"<empty>",
 		)
 	default:
 	}
@@ -208,7 +209,7 @@ func GetURLDetail(u string) (detail URLDetail, err error) {
 
 	if *APIKEY != "" {
 
-		if s256 != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" {
+		if midy.EmptyHash(s256) {
 
 			// if not empty
 			cr, err := VTS.GetFileReport(s256)
